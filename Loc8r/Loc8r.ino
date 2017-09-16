@@ -7,7 +7,7 @@
 #define GPSECHO  false
 
 SoftwareSerial SoftwareSerialGPRS(7, 8);
-SoftwareSerial SoftwareSerialGPS(3, 2);
+SoftwareSerial SoftwareSerialGPS(12, 11);
 
 Adafruit_GPS GPS(&SoftwareSerialGPS);
 
@@ -79,24 +79,24 @@ void loop()
 	{
 		timer = millis();
 	}
-	if (millis() - timer > 10000) { //5 minutes 5L * 60 * 1000
-		/*
+	if (millis() - timer > 5L * 60 * 1000) { //5 minutes 
+		
 		Serial.print(millis());
 		Serial.print('\t');
 		Serial.print(timer);
 		Serial.print('\t');
 		Serial.print(millis() - timer);
 		Serial.print('\t');
-		*/
-		Serial.print(GPS.latitude);
+		
+		/*Serial.print(GPS.latitude);
 		Serial.print('\t');
 		Serial.print(GPS.longitude);
-		Serial.print('\t');
+		Serial.print('\t');*/
 		Serial.print(GPS.latitudeDegrees);
 		Serial.print('\t');
-		Serial.print(GPS.longitudeDegrees);
+		Serial.println(GPS.longitudeDegrees);
 		Serial.print('\t');
-		Serial.print(GPS.altitude);
+		/*Serial.print(GPS.altitude);
 		Serial.print('\t');
 		Serial.print(GPS.angle);
 		Serial.print('\t');
@@ -104,7 +104,7 @@ void loop()
 		Serial.print('\t');
 		Serial.print(GPS.month);
 		Serial.print('\t');
-		Serial.println(GPS.year);
+		Serial.println(GPS.year);*/
 
 		//
 		updateLocation();
