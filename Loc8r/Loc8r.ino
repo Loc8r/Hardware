@@ -79,13 +79,36 @@ void loop()
 	{
 		timer = millis();
 	}
-	Serial.print(millis());
-	Serial.print('\t');
-	Serial.print(timer);
-	Serial.print('\t');
-	Serial.println(millis() - timer);
-	if (millis() - timer > 5L * 60 * 1000) { //5 minutes 
+	if (millis() - timer > 10000) { //5 minutes 5L * 60 * 1000
+		/*
+		Serial.print(millis());
+		Serial.print('\t');
+		Serial.print(timer);
+		Serial.print('\t');
+		Serial.print(millis() - timer);
+		Serial.print('\t');
+		*/
+		Serial.print(GPS.latitude);
+		Serial.print('\t');
+		Serial.print(GPS.longitude);
+		Serial.print('\t');
+		Serial.print(GPS.latitudeDegrees);
+		Serial.print('\t');
+		Serial.print(GPS.longitudeDegrees);
+		Serial.print('\t');
+		Serial.print(GPS.altitude);
+		Serial.print('\t');
+		Serial.print(GPS.angle);
+		Serial.print('\t');
+		Serial.print(GPS.day);
+		Serial.print('\t');
+		Serial.print(GPS.month);
+		Serial.print('\t');
+		Serial.println(GPS.year);
+
+		//
 		updateLocation();
+
 	}
 	if (SoftwareSerialGPRS.available())
 	{
@@ -97,7 +120,7 @@ void updateLocation() {
 	String location;
 	if (GPS.fix)
 	{
-		location = String(GPS.latitudeDegrees, 4) + ", " + String(GPS.longitudeDegrees, 4);
+		location = String(GPS.latitudeDegrees, 4) + "," + String(GPS.longitudeDegrees, 4);
 	}
 	else
 	{
