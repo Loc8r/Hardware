@@ -1,9 +1,39 @@
+#include <Adafruit_GPS.h>
 #include <SoftwareSerial.h>
 #include <String.h>
 
-#define SERVER_PHONE_NUMBER "+16472164936" //incl. country code
+#define SERVER_PHONE_NUMBER "+16475287299" //incl. country code
+
+#define GPSECHO  false
 
 SoftwareSerial SoftwareSerialGPRS(7, 8);
+SoftwareSerial SoftwareSerialGPS(3, 2);
+
+Adafruit_GPS GPS(&SoftwareSerialGPS);
+
+uint32_t timer = millis();
+boolean usingInterrupt = false;
+void useInterrupt(boolean); // Func prototype keeps Arduino 0023 happy
+
+							// Interrupt is called once a millisecond, looks for any new GPS data, and stores it
+SIGNAL(TIMER0_COMPA_vect) {
+	char c = GPS.read();
+}
+
+void useInterrupt(boolean v) {
+	if (v) {
+		// Timer0 is already used for millis() - we'll just interrupt somewhere
+		// in the middle and call the "Compare A" function above
+		OCR0A = 0xAF;
+		TIMSK0 |= _BV(OCIE0A);
+		usingInterrupt = true;
+	}
+	else {
+		// do not call the interrupt function COMPA anymore
+		TIMSK0 &= ~_BV(OCIE0A);
+		usingInterrupt = false;
+	}
+}
 
 void setup()
 {
@@ -11,32 +41,73 @@ void setup()
 	Serial.begin(19200);    //must match the GPRS baud rate
 	delay(500);
 	Serial.println("GPRS INITIALIZED");
+
+	GPS.begin(9600);
+	GPS.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
+	GPS.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);   // 1 Hz update rate
+	useInterrupt(true);
+	delay(1000);
+	// Ask for firmware version
+	SoftwareSerialGPS.println(PMTK_Q_RELEASE);
+	Serial.println("GPS INITIALIZED");
+	updateLocation();
 }
 
 void loop()
 {
-	//after start up the program, you can using terminal to connect the serial of gprs shield,
-	//if you input 't' in the terminal, the program will execute SendTextMessage(), it will show how to send a sms message,
-	//if input 'd' in the terminal, it will execute DialVoiceCall(), etc.
+	if (!usingInterrupt) {
+		// read data from the GPS in the 'main loop'
+		char c = GPS.read();
+		// if you want to debug, this is a good time to do it!
+		if (GPSECHO)
+			if (c) Serial.print(c);
+	}
 
-	if (Serial.available())
+	// if a sentence is received, we can check the checksum, parse it...
+	if (GPS.newNMEAreceived()) {
+		// a tricky thing here is if we print the NMEA sentence, or data
+		// we end up not listening and catching other sentences!
+		// so be very wary if using OUTPUT_ALLDATA and trytng to print out data
+		//Serial.println(GPS.lastNMEA());   // this also sets the newNMEAreceived() flag to false
+
+		if (!GPS.parse(GPS.lastNMEA()))   // this also sets the newNMEAreceived() flag to false
+			return;  // we can fail to parse a sentence in which case we should just wait for another
+	}
+
+	// if millis() or timer wraps around, we'll just reset it
+	if (timer > millis())
 	{
-		Serial.println("Command Received");
-		switch (Serial.read())
-		{
-		case 't':
-			SendTextMessage("LOOOOL TESTING AT 4:30 AM");
-			break;
-		}
-
-		if (SoftwareSerialGPRS.available())
-		{
-			Serial.write(SoftwareSerialGPRS.read());
-		}
+		timer = millis();
+	}
+	Serial.print(millis());
+	Serial.print('\t');
+	Serial.print(timer);
+	Serial.print('\t');
+	Serial.println(millis() - timer);
+	if (millis() - timer > 5L * 60 * 1000) { //5 minutes 
+		updateLocation();
+	}
+	if (SoftwareSerialGPRS.available())
+	{
+		Serial.write(SoftwareSerialGPRS.read());
 	}
 }
 
-void SendTextMessage(String text)
+void updateLocation() {
+	String location;
+	if (GPS.fix)
+	{
+		location = String(GPS.latitudeDegrees, 4) + ", " + String(GPS.longitudeDegrees, 4);
+	}
+	else
+	{
+		location = "1.2345, 1.2345";
+	}
+	sendTextMessage(location);
+	timer = millis(); // reset the timer
+}
+
+void sendTextMessage(String text)
 {
 	SoftwareSerialGPRS.print("AT+CMGF=1\r");    //SMS in text mode
 	delay(100);
