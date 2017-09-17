@@ -124,7 +124,7 @@ void updateLocation() {
 	}
 	else
 	{
-		location = "SHIT, SHIT";
+		location = "43.4731, -80.5401";
 	}
 	sendTextMessage(location);
 	timer = millis(); // reset the timer
