@@ -79,7 +79,7 @@ void loop()
 	{
 		timer = millis();
 	}
-	if (millis() - timer > 5L * 60 * 1000) { //5 minutes 
+	if (millis() - timer > 15L * 1000) { //15 seconds 
 		
 		Serial.print(millis());
 		Serial.print('\t');
@@ -124,7 +124,7 @@ void updateLocation() {
 	}
 	else
 	{
-		location = "1.2345, 1.2345";
+		location = "SHIT, SHIT";
 	}
 	sendTextMessage(location);
 	timer = millis(); // reset the timer
